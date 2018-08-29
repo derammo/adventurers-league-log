@@ -51,8 +51,6 @@ class CharacterLogEntriesController < LogEntriesController
 
   def import
     authorize @log_entry
-    @magic_items = [MagicItem.new] + @log_entry.magic_items
-    @magic_item_count = @log_entry.magic_items.count
     @use_location_override = true
     @use_dm_override = true
     render :new, q: params[:q]
@@ -109,6 +107,7 @@ class CharacterLogEntriesController < LogEntriesController
 
   # TODO: why does the default implementation of build not work, preventing us from using build_log_entry for the import action?
   def import_log_entry
+    # build does not handle magic items correctly, so we do them separately
     @log_entry = @character.character_log_entries.build(log_entries_params.except(:magic_items_attributes))
     @log_entry.characters = [@character]
     # uncounted item 0
