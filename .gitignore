@@ -22,3 +22,6 @@
 /tmp
 
 .env
+
+# don't check in built bundle
+vendor/bundle

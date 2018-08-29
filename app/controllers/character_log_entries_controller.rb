@@ -6,9 +6,10 @@ class CharacterLogEntriesController < LogEntriesController
   before_action :load_user
   before_action :load_character
   before_action :build_log_entry, only: [:create]
+  before_action :import_log_entry, only: [:import]
   before_action :load_log_entry, only: [:show, :edit, :update, :destroy]
-  before_action :load_locations, only: [:new, :create, :edit, :update]
-  before_action :load_player_dms, only: [:new, :create, :edit, :update]
+  before_action :load_locations, only: [:new, :create, :edit, :update, :import]
+  before_action :load_player_dms, only: [:new, :create, :edit, :update, :import]
 
   before_action do
     add_crumb @character.name,
@@ -48,6 +49,15 @@ class CharacterLogEntriesController < LogEntriesController
     end
   end
 
+  def import
+    authorize @log_entry
+    @magic_items = [MagicItem.new] + @log_entry.magic_items
+    @magic_item_count = @log_entry.magic_items.count
+    @use_location_override = true
+    @use_dm_override = true
+    render :new, q: params[:q]
+  end
+
   def edit
     authorize @log_entry
     @magic_items = [MagicItem.new] + @log_entry.magic_items
@@ -58,8 +68,6 @@ class CharacterLogEntriesController < LogEntriesController
     authorize @log_entry
     manage_locations
     manage_player_dms
-
-    puts log_entries_params.to_s
 
     if @log_entry.update_attributes(log_entries_params)
       redirect_to user_character_path(current_user, @character, q: params[:q]),
@@ -97,6 +105,18 @@ class CharacterLogEntriesController < LogEntriesController
   def build_log_entry
     @log_entry = @character.character_log_entries.build(log_entries_params)
     @log_entry.characters = [@character]
+  end
+
+  # TODO: why does the default implementation of build not work, preventing us from using build_log_entry for the import action?
+  def import_log_entry
+    @log_entry = @character.character_log_entries.build(log_entries_params.except(:magic_items_attributes))
+    @log_entry.characters = [@character]
+    # uncounted item 0
+    @magic_items = [MagicItem.new]
+    log_entries_params[:magic_items_attributes].each { |k, v| 
+      @magic_items.push(@log_entry.magic_items.build(v.except(:_destroy, :_id)))
+    }
+    @magic_item_count = @magic_items.count - 1
   end
 
   def load_player_dms
@@ -141,5 +161,4 @@ class CharacterLogEntriesController < LogEntriesController
                   :player_dm_id, :notes,
                   magic_items_attributes: magic_item_params)
   end
-
 end
