@@ -7,6 +7,7 @@ class CharacterLogImportsController < LogEntriesController
       authorize @character_log_import
       character  = Character.where(user_id: current_user).first()
       defaults = { :date_played => DateTime.now, :location_played => "roll20.net" }
+      # TODO how do you use log_entries_params in this context to actually filter/permit the parameters?   
       redirect_to(import_user_character_character_log_entries_path(current_user, character.id, character_log_entry: defaults.merge(params[:character_log_entry].permit!))) && return
     else
       redirect_to(root_path) && return
