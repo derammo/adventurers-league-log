@@ -1,7 +1,7 @@
 # :nodoc:
 class LogEntriesController < AuthenticationController
-  before_filter :convert_query_string_to_hash, only: [:index]
-  before_filter :load_log_entry_type
+  before_action :convert_query_string_to_hash, only: [:index]
+  before_action :load_log_entry_type
 
   def convert_query_string_to_hash
     params.delete(:q) if params[:q].blank?
@@ -37,7 +37,7 @@ class LogEntriesController < AuthenticationController
   end
 
   def load_locations
-    @locations = @user.locations.all
+    @locations = @user.locations.order(:name).all
   end
 
   def manage_locations
@@ -57,7 +57,7 @@ class LogEntriesController < AuthenticationController
   end
 
   def magic_item_params
-    [:id, :name, :rarity, :location_found, :table, :table_result,
-      :character_id, :not_included_in_count, :notes, :_destroy]
+    [:id, :name, :rarity, :tier, :location_found, :table, :table_result,
+      :character_id, :purchased, :log_entry, :log_entry_id, :purchase_log_entry, :purchase_log_entry_id, :not_included_in_count, :notes, :_destroy]
   end
 end

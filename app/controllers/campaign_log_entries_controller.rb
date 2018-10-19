@@ -2,32 +2,32 @@ class CampaignLogEntriesController < LogEntriesController
   skip_before_action :authenticate_user!, only: [:show]
 
   add_crumb('Home', '/')
-  before_filter :load_user
-  before_filter :load_character, only: [:show]
-  before_filter :load_campaign,
+  before_action :load_user
+  before_action :load_character, only: [:show]
+  before_action :load_campaign,
                 only: [:show, :new, :create, :edit, :update, :destroy]
-  before_filter :load_log_entry,
+  before_action :load_log_entry,
                 only: [:show, :edit, :update, :destroy]
-  before_filter :load_locations, only: [:new, :create, :edit, :update]
+  before_action :load_locations, only: [:new, :create, :edit, :update]
 
-  before_filter(only: [:show]) do
+  before_action(only: [:show]) do
     add_crumb @character.name,
               user_character_path(@character.user, @character) if @character
   end
-  before_filter(only: [:show]) do
+  before_action(only: [:show]) do
     add_crumb @campaign.name,
               user_campaign_path(@campaign.user, @campaign) if @campaign
   end
 
-  before_filter(only: [:new, :create, :edit, :update]) do
+  before_action(only: [:new, :create, :edit, :update]) do
     add_crumb @campaign.name,
               user_campaign_path(@campaign.user, @campaign)
   end
 
-  before_filter(only: [:show]) { add_crumb @log_entry.adventure_title }
+  before_action(only: [:show]) { add_crumb @log_entry.adventure_title }
 
-  before_filter(only: [:new,  :create]) { add_crumb 'New Log Entry' }
-  before_filter(only: [:edit, :update]) { add_crumb 'Edit Log Entry' }
+  before_action(only: [:new,  :create]) { add_crumb 'New Log Entry' }
+  before_action(only: [:edit, :update]) { add_crumb 'Edit Log Entry' }
 
   def show
     authorize @log_entry
@@ -40,6 +40,7 @@ class CampaignLogEntriesController < LogEntriesController
     authorize @log_entry
 
     @log_entry.characters = @campaign.characters
+    @log_entry.old_format = @campaign.campaign_log_entry_style_old?
     @magic_items = [MagicItem.new]
     @magic_item_count = 0
   end
@@ -132,8 +133,9 @@ class CampaignLogEntriesController < LogEntriesController
   def log_entries_params
     params.require(:campaign_log_entry)
           .permit(:adventure_title, :session_num, :date_played,
+                  :old_format, :advancement_checkpoints, :treasure_checkpoints,
                   :xp_gained, :gp_gained, :renown_gained, :downtime_gained,
-                  :num_secret_missions, :location_played, :notes,
+                  :num_secret_missions, :location_played, :treasure_tier, :notes,
                   character_ids: [],
                   magic_items_attributes: magic_item_params)
   end

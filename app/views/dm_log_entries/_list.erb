@@ -1,0 +1,42 @@
+<div class="row">
+  <div class='col-xs-12 col-sm-7 col-md-8'>
+    <%= paginate @log_entries %>
+  </div>
+
+  <div class='col-xs-12 col-sm-5 col-md-4 list-buttons'>
+    <div class="pull-right hidden-xs">
+      <%= render partial: 'dm_log_entries/list_buttons', locals: { q: q } %>
+    </div>
+
+    <div class="visible-xs" style="padding-left:15px;">
+      <%= render partial: 'dm_log_entries/list_buttons', locals: { q: q } %>
+    </div>
+  </div>
+</div>
+
+<label class='css3-checkboxes'>
+  <%= check_box_tag :old_format, "1", @user.dm_style_old? %>
+  <span class="link-like">Old Format</span>
+</label>
+
+<div class="new_format">
+  <%= render partial: 'dm_log_entries/table', locals: {q: q} %>
+</div>
+
+<div class="old_format">
+  <%= render partial: 'dm_log_entries/old_table', locals: {q: q} %>
+</div>
+
+<script>
+  $('#old_format').change( function(){
+    if($(this).is(':checked')) {
+      $(".old_format").removeClass('hide');
+      $(".new_format").addClass('hide');
+    } else {
+      $(".new_format").removeClass('hide');
+      $(".old_format").addClass('hide');
+    }
+  });
+
+  $('#old_format').change();
+</script>

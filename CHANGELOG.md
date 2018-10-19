@@ -1,6 +1,36 @@
 CHANGELOG
 ======
 
+v1.8.3
+---------------
+- Allow tier to be assigned in campaign log entries.
+- Allow for fractional downtime and renown.
+- Handle negative XP more gravefully.
+
+v1.8.2
+---------------
+- Adjust notes field height.
+- Allow for fractional checkpoints
+- Change DM Logs to tierless TCP
+- Fix Trade Log items not becoming purchased
+- Fix magic items showing up to be traded away that were already traded.
+
+v1.8.1
+---------------
+- Make it not show traded away items.
+- Set up printing to work with season 8 log entries
+- Add ability to toggle XP > ACP conversion speed on a per character basis.
+- Fix going above level 20 XP threshold causing issues.
+
+v1.8.0
+---------------
+- Allow for season 8 changes.
+- Add ability to toggle pre season 7 / season 8 changes in user details.
+- Add ability to toggle XP > ACP conversion rounding on a per character basis.
+- Add Purchase Logs to allow for unlocked magic items to be purchased.
+- Sort DMs and Locations alphabetically.
+- Update dependencies for maximum powah.
+
 v1.7.4
 ---------------
 - Allow markdown for notes field in log entries.

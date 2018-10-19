@@ -3,21 +3,21 @@ class CharacterLogEntriesController < LogEntriesController
   skip_before_action :authenticate_user!, only: [:show]
 
   add_crumb('Home', '/')
-  before_filter :load_user
-  before_filter :load_character
-  before_filter :build_log_entry, only: [:create]
-  before_filter :load_log_entry, only: [:show, :edit, :update, :destroy]
-  before_filter :load_locations, only: [:new, :create, :edit, :update]
-  before_filter :load_player_dms, only: [:new, :create, :edit, :update]
+  before_action :load_user
+  before_action :load_character
+  before_action :build_log_entry, only: [:create]
+  before_action :load_log_entry, only: [:show, :edit, :update, :destroy]
+  before_action :load_locations, only: [:new, :create, :edit, :update]
+  before_action :load_player_dms, only: [:new, :create, :edit, :update]
 
-  before_filter do
+  before_action do
     add_crumb @character.name,
               user_character_path(@character.user, @character)
   end
 
-  before_filter(only: [:new]) { add_crumb 'New Game Log Entry', '#' }
-  before_filter(only: [:edit]) { add_crumb 'Edit Log Entry' }
-  before_filter(only: [:show]) { add_crumb 'Show Log Entry' }
+  before_action(only: [:new]) { add_crumb 'New Game Log Entry', '#' }
+  before_action(only: [:edit]) { add_crumb 'Edit Log Entry' }
+  before_action(only: [:show]) { add_crumb 'Show Log Entry' }
 
   def show
     authorize @log_entry
@@ -27,6 +27,7 @@ class CharacterLogEntriesController < LogEntriesController
   def new
     @log_entry = @character.character_log_entries.new
     @log_entry.characters = [@character]
+    @log_entry.old_format = @user.character_log_entry_style_old?
     authorize @log_entry
     @magic_items = [MagicItem.new]
     @magic_item_count = 0
@@ -58,6 +59,8 @@ class CharacterLogEntriesController < LogEntriesController
     manage_locations
     manage_player_dms
 
+    puts log_entries_params.to_s
+
     if @log_entry.update_attributes(log_entries_params)
       redirect_to user_character_path(current_user, @character, q: params[:q]),
                   flash: { notice: 'Successfully updated log entry '\
@@ -72,7 +75,7 @@ class CharacterLogEntriesController < LogEntriesController
     authorize @log_entry
     @log_entry.destroy
 
-    redirect_to user_character_path(current_user, @character, q: params[:q]),
+    redirect_to user_character_path(current_user, @character, q: params.permit(q: [:s]).fetch(:q, nil)),
                 flash: { notice: 'Successfully deleted '\
                                  "#{@log_entry.adventure_title}" }
   end
@@ -97,7 +100,7 @@ class CharacterLogEntriesController < LogEntriesController
   end
 
   def load_player_dms
-    @player_dms = @user.player_dms.all
+    @player_dms = @user.player_dms.order(:name).all
   end
 
   def manage_player_dms
@@ -130,11 +133,13 @@ class CharacterLogEntriesController < LogEntriesController
 
   def log_entries_params
     params.require(:character_log_entry)
-          .permit(:adventure_title, :session_num, :date_played,
+          .permit(:adventure_title, :treasure_tier, :session_num, :date_played,
+                  :old_format, :advancement_checkpoints, :treasure_checkpoints,
                   :xp_gained, :gp_gained, :renown_gained,
                   :downtime_gained, :num_secret_missions,
                   :location_played, :dm_name, :dm_dci_number,
                   :player_dm_id, :notes,
                   magic_items_attributes: magic_item_params)
   end
+
 end

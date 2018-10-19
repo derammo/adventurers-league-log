@@ -4,9 +4,14 @@
     <%= magic_item_form.text_field :name, class: 'form-control' %>
   </div>
 
-  <div class="form-group col-md-4">
+  <div class="form-group col-md-3">
     <%= magic_item_form.label :rarity, 'Rarity' %>
     <%= magic_item_form.select :rarity, MagicItem.rarities.map{ |rarity| [rarity[0].titleize, rarity[0]] }, { include_blank: true }, { class: 'form-control ' } %>
+  </div>
+
+  <div class="form-group col-md-1">
+    <%= magic_item_form.label :tier, 'Tier' %>
+    <%= magic_item_form.select :tier, [["1", 1], ["2", 2], ["3", 3], ["4", 4]], { include_blank: true }, { class: 'form-control ' } %>
   </div>
 </div>
 
@@ -46,6 +51,12 @@
     end %>
   </div>
 
+  <div class="form-group col-md-4">
+    <%= magic_item_form.label :purchased, class: 'css3-checkboxes' do
+      (magic_item_form.check_box :purchased, { disabled: magic_item.traded_or_purchased?, class: "purchased" }, 'true', 'false') + "<span>Purchased</span>".html_safe
+    end %>
+  </div>
+
   <% if @character %>
     <%= magic_item_form.hidden_field :character_id, value: @character.id %>
   <% elsif @campaign %>
@@ -58,9 +69,9 @@
   <% end %>
 </div>
 
-<%= magic_item_form.hidden_field :_destroy, class: "_destroy" %>
-
 <% if removeable %>
+  <%= magic_item_form.hidden_field :_destroy, class: "_destroy" %>
+
   <div class="row">
     <div class='col-xs-12'>
       <div class="pull-right">

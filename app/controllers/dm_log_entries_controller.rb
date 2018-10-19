@@ -3,22 +3,22 @@ class DmLogEntriesController < LogEntriesController
   skip_before_action :authenticate_user!, only: [:index, :show]
 
   add_crumb('Home', '/')
-  before_filter :set_magic_item_character_id, only: [:create, :update]
+  before_action :set_magic_item_character_id, only: [:create, :update]
 
-  before_filter :load_user
-  before_filter :load_log_entry, only: [:show, :edit, :update, :destroy]
-  before_filter :load_characters, only: [:index, :new, :create, :edit, :update]
-  before_filter :load_hourly_xp_lookup_table, only: [:new, :create, :edit, :update]
-  before_filter :load_character,  only: [:create, :update]
-  before_filter :load_locations, only: [:new, :create, :edit, :update]
-  before_filter :build_log_entry, only: [:create]
-  before_filter :load_magic_items, only: [:create, :update]
-  before_filter :set_character, only: [:create, :update]
+  before_action :load_user
+  before_action :load_log_entry, only: [:show, :edit, :update, :destroy]
+  before_action :load_characters, only: [:index, :new, :create, :edit, :update]
+  before_action :load_hourly_xp_lookup_table, only: [:new, :create, :edit, :update]
+  before_action :load_character,  only: [:create, :update]
+  before_action :load_locations, only: [:new, :create, :edit, :update]
+  before_action :build_log_entry, only: [:create]
+  before_action :load_magic_items, only: [:create, :update]
+  before_action :set_character, only: [:create, :update]
 
-  before_filter(except: [:print, :print_condensed]) { add_crumb('DM Logs', user_dm_log_entries_path(@user)) }
-  before_filter(only: [:new])  { add_crumb 'New Log Entry' }
-  before_filter(only: [:edit]) { add_crumb 'Edit Log Entry' }
-  before_filter(only: [:show]) { add_crumb 'Show Log Entry' }
+  before_action(except: [:print, :print_condensed]) { add_crumb('DM Logs', user_dm_log_entries_path(@user)) }
+  before_action(only: [:new])  { add_crumb 'New Log Entry' }
+  before_action(only: [:edit]) { add_crumb 'Edit Log Entry' }
+  before_action(only: [:show]) { add_crumb 'Show Log Entry' }
 
   def index
     authorize @user, :publicly_visible_dm_logs?
@@ -28,6 +28,7 @@ class DmLogEntriesController < LogEntriesController
     @search                   = @user.dm_log_entries.search(params[:q])
     @prepaginated_log_entries = @search.result(distinct: false)
     @log_entries              = @prepaginated_log_entries.page params[:page]
+    @style                    = @user.dm_style
 
     set_index_stats
   end
@@ -47,6 +48,7 @@ class DmLogEntriesController < LogEntriesController
 
   def new
     @log_entry   = @user.dm_log_entries.new
+    @log_entry.old_format = @user.dm_log_entry_style_old?
     authorize @log_entry
 
     @magic_items = [MagicItem.new]
@@ -143,16 +145,23 @@ class DmLogEntriesController < LogEntriesController
     params.require(:dm_log_entry)
           .permit(:adventure_title, :session_num, :date_dmed,
                   :session_length_hours, :player_level,
+                  :old_format, :advancement_checkpoints, :treasure_checkpoints,
                   :xp_gained, :gp_gained, :renown_gained,
                   :downtime_gained, :num_secret_missions,
                   :location_played, :dm_name, :dm_dci_number, :notes,
-                  :date_played, :character_id,
+                  :date_played, :character_id, :treasure_tier,
                   magic_items_attributes: magic_item_params)
   end
 
   def set_index_stats
     @total_xp        = @prepaginated_log_entries.sum(:xp_gained)
     @unused_xp       = @prepaginated_log_entries.includes(:log_assignments).where(log_assignments: {log_entry_id: nil }).sum(:xp_gained)
+    @total_acp       = @prepaginated_log_entries.sum(:advancement_checkpoints)
+    @unused_acp      = @prepaginated_log_entries.includes(:log_assignments).where(log_assignments: {log_entry_id: nil }).sum(:advancement_checkpoints)
+
+    @total_tcp       = @prepaginated_log_entries.sum(:treasure_checkpoints)
+    @unused_tcp      = @prepaginated_log_entries.includes(:log_assignments).where(log_assignments: {log_entry_id: nil }).sum(:treasure_checkpoints)
+
     @total_hours     = @prepaginated_log_entries.sum(:session_length_hours)
     @total_gp        = @prepaginated_log_entries.sum(:gp_gained)
     @unused_gp       = @prepaginated_log_entries.includes(:log_assignments).where(log_assignments: {log_entry_id: nil }).sum(:gp_gained)

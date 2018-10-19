@@ -42,16 +42,35 @@ class LogEntry < ActiveRecord::Base
     false
   end
 
+  def is_purchase_log_entry?
+    false
+  end
+
   def is_campaign_log_entry?
     false
+  end
+
+  class << self
+    def earned_treasure_checkpoints(tier:)
+      where(treasure_tier: tier).sum(:treasure_checkpoints)
+    end
+
+    TREASURE_TIERS = [:tier1_treasure_checkpoints, :tier2_treasure_checkpoints, :tier3_treasure_checkpoints, :tier4_treasure_checkpoints]
+    def spent_treasure_checkpoints(tier:)
+      sum(TREASURE_TIERS[tier - 1])
+    end
   end
 
   def num_magic_items_gained
     magic_items.where(not_included_in_count: false).count
   end
 
-  def magic_items_list(char)
-    list = magic_items.where(character: char).pluck(:name).join(', ')
+  def magic_items_list(char, opts = {})
+    if opts[:show_purchased]
+      list = magic_items.where(character: char).map{|item| item.name + (item.purchased || item.purchase_log_entry_id ? "*" : "")}.join(', ')
+    else
+      list = magic_items.where(character: char).pluck(:name).join(', ')
+    end
 
     if list == ''
       return ''
@@ -59,4 +78,5 @@ class LogEntry < ActiveRecord::Base
       return list
     end
   end
+
 end

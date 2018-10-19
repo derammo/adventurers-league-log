@@ -28,22 +28,28 @@
     <%= display_attribute "Background", @character.background %>
     <%= display_attribute "Lifestyle", @character.lifestyle_name %>
     <br class='hidden-xs'>
-    <%= display_attribute "Current Level", @character.current_level %>
-    <%= display_attribute "Total XP",  @character.total_xp %>
-    <%= display_attribute "XP to Level", @character.xp_to_next_level %>
-    <div class='hidden-xs'><%= display_attribute "XP for Next",  @character.xp_for_next_level %></div>
+    <%= display_attribute "Current Level", @character.current_level, type: :level %>
+    <%= display_attribute "XP Level",  @character.xp_level if @style == 'both' %>
+    <%= display_attribute "Total XP",  @character.total_xp if @style == 'old' || @style == 'both' %>
+    <%= display_attribute "XP to Level", @character.xp_to_next_level if @style == 'old' || @style == 'both' %>
+    <div class='hidden-xs'><%= display_attribute "XP for Next",  @character.xp_for_next_level if @style == 'old' || @style == 'both' %></div>
+
+    <%= display_attribute "ACP Level", @character.checkpoint_level if @style == 'both' %>
+    <%= display_attribute "ACP to Level", @character.checkpoints_to_next_level if @style == 'season8' || @style == 'both' %>
+
     <%= display_attribute "Total GP", humanize_decimal(@character.total_gp) %>
-    <%= display_attribute "Total Downtime",  @character.total_downtime %>
+    <%= display_attribute "Total Downtime", humanize_decimal(@character.total_downtime) %>
   </div>
 
   <div class="col-md-4">
     <%= display_attribute "Faction",  @character.faction_name %>
-    <%= display_attribute "Faction Rank",  @character.faction_rank %>
-    <%= display_attribute "Total Renown",  @character.total_renown %>
-    <%= display_attribute "Secret Missions",  @character.total_secret_missions %>
+    <%= display_attribute "Faction Rank", @character.faction_rank %>
+    <%= display_attribute "Total Renown", humanize_decimal(@character.total_renown) %>
+    <%= display_attribute "Secret Missions", @character.total_secret_missions  if @style == 'old' || @style == 'both'%>
+    <% if @style == 'season8' %><br class='hidden-xs'><% end %>
     <br class='hidden-xs'>
-    <%= display_attribute "Total Magic Items",  @character.total_magic_items %>
-    <%= display_attribute_ary (link_to "Magic Items", user_character_magic_items_path(@user, @character)), @magic_items.pluck(:name) %>
+    <%= display_attribute "Treasure CPs", treasure_checkpoints_string(@character.log_entries) if @style == 'season8' || @style == 'both' %>
+    <%= display_attribute (link_to "Magic Items", user_character_magic_items_path(@user, @character)), @magic_items.pluck(:name), type: :array %>
   </div>
 
   <div class="col-md-2 hidden-xs hidden-sm" style="margin-top:-40px;">
@@ -58,7 +64,7 @@
 <div class="row">
   <div class='col-xs-12'>
     <div id='log_entires_list'>
-      <%= render partial: 'character_log_entries/list' %>
+      <%= render partial: 'character_log_entries/list', locals: { q: sort_params(params).fetch(:q, {}) } %>
     </div>
   </div>
 </div>

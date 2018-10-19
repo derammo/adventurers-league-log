@@ -21,13 +21,15 @@ class CharactersController < AuthenticationController
   def show
     authorize @character
 
-    params[:q] = JSON.parse(params[:q].gsub('=>', ': ')).symbolize_keys if params[:q].class == String
-    params[:q] = { type_not_eq: 'DmLogEntry', s: 'date_played desc' } unless params[:q]
+    params[:q] = JSON.parse(params[:q].gsub('=>', ': ')).symbolize_keys if params[:q].class == String && params[:q].length >= 2
+    params[:q] = { type_not_eq: 'DmLogEntry', s: 'date_played desc' } unless params[:q].present?
     @dm_logs_enabled = params[:q][:type_not_eq] != 'DmLogEntry'
 
     @search      = @character.log_entries.search(params[:q])
     @log_entries = @search.result(distinct: false).page params[:page]
-    @magic_items = @character.magic_items.order(:id).where(trade_log_entry_id: nil)
+    @magic_items = @character.magic_items.order(:id).purchased.not_traded
+
+    @style = @user.character_style
 
     respond_to do |format|
       format.html
@@ -50,6 +52,12 @@ class CharactersController < AuthenticationController
     @total_renown      = 0
     @total_magic_items = 0
 
+    @total_acp         = @character.checkpoints_from_xp
+    @total_tcp1        = 0
+    @total_tcp2        = 0
+    @total_tcp3        = 0
+    @total_tcp4        = 0
+
     render 'log_entries/print_character'
   end
 
@@ -61,6 +69,7 @@ class CharactersController < AuthenticationController
     end
 
     @log_entries = @character.log_entries.order(date_played: :asc).all
+    @character_style_old = @user.character_style_old?
 
     render 'log_entries/print_character_condensed'
   end
@@ -91,7 +100,7 @@ class CharactersController < AuthenticationController
     authorize @character
 
     if @character.update_attributes(character_params)
-      redirect_to (session[:return_to] || user_characters_path(@user)), 
+      redirect_to (session[:return_to] || user_characters_path(@user)),
                   flash: { notice: "Successfully updated character #{@character.name}" }
     else
       flash.now[:error] = "Failed to update character #{@character.name}: #{@character.errors.full_messages.join(',')}"
@@ -154,6 +163,9 @@ class CharactersController < AuthenticationController
   end
 
   def character_params
-    params.require(:character).permit(:name, :race, :class_and_levels, :faction_override, :faction_id, :background, :lifestyle_override, :lifestyle_id, :portrait_url, :character_sheet_url, :publicly_visible)
+    params.require(:character).permit(:name, :race, :class_and_levels, :faction_override,
+                                      :faction_id, :background, :lifestyle_override, :lifestyle_id,
+                                      :portrait_url, :character_sheet_url, :publicly_visible,
+                                      :conversion_speed, :conversion_type)
   end
 end
