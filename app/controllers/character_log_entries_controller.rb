@@ -6,9 +6,10 @@ class CharacterLogEntriesController < LogEntriesController
   before_action :load_user
   before_action :load_character
   before_action :build_log_entry, only: [:create]
+  before_action :import_log_entry, only: [:import]
   before_action :load_log_entry, only: [:show, :edit, :update, :destroy]
-  before_action :load_locations, only: [:new, :create, :edit, :update]
-  before_action :load_player_dms, only: [:new, :create, :edit, :update]
+  before_action :load_locations, only: [:new, :create, :edit, :update, :import]
+  before_action :load_player_dms, only: [:new, :create, :edit, :update, :import]
 
   before_action do
     add_crumb @character.name,
@@ -46,6 +47,13 @@ class CharacterLogEntriesController < LogEntriesController
       flash.now[:error] = log_entry_error_message 'create'
       render :new, q: params[:q]
     end
+  end
+
+  def import
+    authorize @log_entry
+    @use_location_override = true
+    @use_dm_override = true
+    render :new, q: params[:q]
   end
 
   def edit
@@ -97,6 +105,19 @@ class CharacterLogEntriesController < LogEntriesController
   def build_log_entry
     @log_entry = @character.character_log_entries.build(log_entries_params)
     @log_entry.characters = [@character]
+  end
+
+  # TODO: why does the default implementation of build not work, preventing us from using build_log_entry for the import action?
+  def import_log_entry
+    # build does not handle magic items correctly, so we do them separately
+    @log_entry = @character.character_log_entries.build(log_entries_params.except(:magic_items_attributes))
+    @log_entry.characters = [@character]
+    # uncounted item 0
+    @magic_items = [MagicItem.new]
+    log_entries_params[:magic_items_attributes].each { |k, v| 
+      @magic_items.push(@log_entry.magic_items.build(v.except(:_destroy, :_id)))
+    }
+    @magic_item_count = @magic_items.count - 1
   end
 
   def load_player_dms

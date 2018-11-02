@@ -6,7 +6,11 @@ AdventurersLeagueLog::Application.routes.draw do
     resources :locations
 
     resources :characters do
-      resources :character_log_entries
+      resources :character_log_entries do 
+        collection do 
+          get 'import'
+        end
+      end  
       resources :trade_log_entries
       resources :purchase_log_entries
       resources :character_campaigns, only: [:destroy]
@@ -37,7 +41,7 @@ AdventurersLeagueLog::Application.routes.draw do
       resources :campaign_log_entries
     end
     resources :dm_campaign_assignments, only: [:create, :destroy]
-    resources :character_campaigns, only: [:create, :destroy]
+    resources :character_campaigns, only: [:create, :destroy] 
   end
 
   get 'stats', controller: 'home'
@@ -47,6 +51,9 @@ AdventurersLeagueLog::Application.routes.draw do
       get :autocomplete_adventure_name
     end
   end
+
+  # import without knowing the target user or character yet
+  resources :character_log_imports, only: [:new]
 
   get 'donate', controller: 'home'
   root to: 'home#index'

@@ -43,4 +43,8 @@ class CharacterLogEntryPolicy < ApplicationPolicy
   def destroy?
     user_is_current_user
   end
+
+  def import?
+    user_is_current_user
+  end
 end

@@ -23,5 +23,5 @@
 
 .env
 
-# ignore bundled gems
-vendor/bundle/
+# don't check in built bundle
+vendor/bundle
